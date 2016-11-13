@@ -13,6 +13,8 @@
     <version>0.1.0-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
+    <name>Phos Enforcer Plugin</name>
+    <description>Maven plugin that enforcer Java best practices</description>
     <url>https://github.com/veithen/phos</url>
     <inceptionYear>2016</inceptionYear>
 
