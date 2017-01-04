@@ -51,6 +51,16 @@
             <artifactId>jgrapht</artifactId>
             <version>0.8.3</version>
         </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.truth</groupId>
+            <artifactId>truth</artifactId>
+            <version>0.31</version>
+        </dependency>
     </dependencies>
 
     <build>

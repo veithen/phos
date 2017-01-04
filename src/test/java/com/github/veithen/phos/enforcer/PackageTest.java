@@ -2,7 +2,7 @@
  * #%L
  * Phos
  * %%
- * Copyright (C) 2016 Andreas Veithen
+ * Copyright (C) 2016 - 2017 Andreas Veithen
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,34 +19,13 @@
  */
 package com.github.veithen.phos.enforcer;
 
-final class Clazz {
-    private final String name;
+import static com.google.common.truth.Truth.assertThat;
 
-    Clazz(String name) {
-        this.name = name;
-    }
+import org.junit.Test;
 
-    String getName() {
-        return name;
-    }
-
-    Package getPackage() {
-        int idx = name.lastIndexOf('.');
-        return idx == -1 ? Package.DEFAULT : Package.byName(name.substring(0, idx));
-    }
-    
-    @Override
-    public int hashCode() {
-        return name.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof Clazz && ((Clazz)obj).name.equals(name);
-    }
-
-    @Override
-    public String toString() {
-        return name;
+public class PackageTest {
+    @Test
+    public void testHashCodeDefault() {
+        assertThat(Package.DEFAULT.hashCode()).isEqualTo(0);
     }
 }

@@ -20,10 +20,16 @@
 package com.github.veithen.phos.enforcer;
 
 final class Package {
+    static final Package DEFAULT = new Package(null);
+
     private final String name;
 
-    Package(String name) {
+    private Package(String name) {
         this.name = name;
+    }
+
+    static Package byName(String name) {
+        return name == null ? DEFAULT : new Package(name);
     }
 
     String getName() {
@@ -32,16 +38,16 @@ final class Package {
 
     @Override
     public int hashCode() {
-        return name.hashCode();
+        return name == null ? 0 : name.hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof Package && ((Package)obj).name.equals(name);
+        return obj == this || obj instanceof Package && ((Package)obj).name.equals(name);
     }
 
     @Override
     public String toString() {
-        return name;
+        return name == null ? "<default>" : name;
     }
 }
