@@ -150,7 +150,7 @@ public class AggregateReportMojo extends AbstractMojo {
                 throw new MojoExecutionException(String.format("Failed to analyze %s: %s", baseArtifact.getFile(), ex.getMessage()), ex);
             }
         }
-        IBundleCoverage bundle = builder.getBundle("aggregated");
+        IBundleCoverage bundle = builder.getBundle("Coverage Report");
         HTMLFormatter htmlFormatter = new HTMLFormatter();
         htmlFormatter.setOutputEncoding("utf-8");
         htmlFormatter.setLocale(Locale.ENGLISH);
