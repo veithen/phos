@@ -160,6 +160,7 @@ public class AggregateReportMojo extends AbstractMojo {
                     loader.getSessionInfoStore().getInfos(),
                     loader.getExecutionDataStore().getContents());
             visitor.visitBundle(bundle, new DirectorySourceFileLocator(sourcesDirectory, "utf-8", 4));
+            visitor.visitEnd();
         } catch (IOException ex) {
             throw new MojoExecutionException(String.format("Failed to generate coverage report: %s", ex.getMessage()), ex);
         }
