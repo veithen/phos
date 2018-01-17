@@ -21,11 +21,15 @@ package com.github.veithen.phos.jacoco;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Set;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
+import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -34,11 +38,17 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.repository.RepositorySystem;
 import org.apache.maven.shared.artifact.filter.collection.ArtifactFilterException;
 import org.apache.maven.shared.artifact.filter.collection.FilterArtifacts;
 import org.apache.maven.shared.artifact.filter.collection.ProjectTransitivityFilter;
 import org.apache.maven.shared.artifact.filter.collection.ScopeFilter;
+import org.apache.maven.shared.artifact.filter.collection.TypeFilter;
+import org.apache.maven.shared.artifact.resolve.ArtifactResolver;
+import org.apache.maven.shared.artifact.resolve.ArtifactResolverException;
 import org.codehaus.plexus.archiver.UnArchiver;
 import org.jacoco.core.analysis.Analyzer;
 import org.jacoco.core.analysis.CoverageBuilder;
@@ -49,11 +59,20 @@ import org.jacoco.report.FileMultiReportOutput;
 import org.jacoco.report.IReportVisitor;
 import org.jacoco.report.html.HTMLFormatter;
 
-@Mojo(name="aggregate-report", requiresDependencyResolution=ResolutionScope.COMPILE,
+@Mojo(name="aggregate-report", requiresDependencyResolution=ResolutionScope.TEST,
       defaultPhase=LifecyclePhase.SITE, threadSafe=true)
 public class AggregateReportMojo extends AbstractMojo {
     @Parameter(property="project", required=true, readonly=true)
     private MavenProject project;
+
+    @Parameter(property="session", required=true, readonly=true)
+    private MavenSession session;
+
+    @Component
+    private RepositorySystem repositorySystem;
+
+    @Component
+    private ArtifactResolver resolver;
 
     /**
      * The Jar archiver.
@@ -67,42 +86,68 @@ public class AggregateReportMojo extends AbstractMojo {
     @Parameter(defaultValue="${project.build.directory}/site", required=true, readonly=true)
     private File outputDirectory;
 
+    private Set<Artifact> getArtifactsInScope(String scope) throws MojoExecutionException {
+        FilterArtifacts filter = new FilterArtifacts();
+        filter.addFilter(new ProjectTransitivityFilter(project.getDependencyArtifacts(), true));
+        filter.addFilter(new ScopeFilter(scope, null));
+        filter.addFilter(new TypeFilter("jar", null));
+        try {
+            return filter.filter(project.getArtifacts());
+        } catch (ArtifactFilterException ex) {
+            throw new MojoExecutionException(ex.getMessage(), ex);
+        }
+    }
+
+    private File resolveArtifact(Artifact baseArtifact, String classifier, String type, boolean localOnly, boolean allowMissing) throws MojoExecutionException {
+        ProjectBuildingRequest projectBuildingRequest = session.getProjectBuildingRequest();
+        if (localOnly) {
+            projectBuildingRequest = new DefaultProjectBuildingRequest(projectBuildingRequest);
+            projectBuildingRequest.setRemoteRepositories(Collections.<ArtifactRepository>emptyList());
+        }
+        Dependency dependency = new Dependency();
+        dependency.setGroupId(baseArtifact.getGroupId());
+        dependency.setArtifactId(baseArtifact.getArtifactId());
+        dependency.setVersion(baseArtifact.getVersion());
+        dependency.setType(type);
+        dependency.setClassifier(classifier);
+        dependency.setScope(Artifact.SCOPE_COMPILE);
+        Artifact artifact = repositorySystem.createDependencyArtifact(dependency);
+        try {
+            return resolver.resolveArtifact(projectBuildingRequest, artifact).getArtifact().getFile();
+        } catch (ArtifactResolverException ex) {
+            if (allowMissing) {
+                return null;
+            } else {
+                throw new MojoExecutionException("Unable to resolve artifact", ex);
+            }
+        }
+    }
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         File sourcesDirectory = new File(project.getBuild().getDirectory(), "sources");
         sourcesDirectory.mkdirs();
-        FilterArtifacts filter = new FilterArtifacts();
-        filter.addFilter(new ProjectTransitivityFilter(project.getDependencyArtifacts(), true));
-        filter.addFilter(new ScopeFilter(DefaultArtifact.SCOPE_COMPILE, null));
-        Set<Artifact> artifacts;
-        try {
-            artifacts = filter.filter(project.getArtifacts());
-        } catch (ArtifactFilterException ex) {
-            throw new MojoExecutionException(ex.getMessage(), ex);
-        }
         ExecFileLoader loader = new ExecFileLoader();
-        for (Artifact artifact : artifacts) {
-            if ("jacoco".equals(artifact.getClassifier()) && artifact.getType().equals("exec")) {
+        for (Artifact baseArtifact : getArtifactsInScope(DefaultArtifact.SCOPE_TEST)) {
+            File file = resolveArtifact(baseArtifact, "jacoco", "exec", true, true);
+            if (file != null) {
                 try {
-                    loader.load(artifact.getFile());
+                    loader.load(file);
                 } catch (IOException ex) {
-                    throw new MojoExecutionException(String.format("Failed to load exec file %s: %s", artifact.getFile(), ex.getMessage()), ex);
+                    throw new MojoExecutionException(String.format("Failed to load exec file %s: %s", file, ex.getMessage()), ex);
                 }
             }
         }
         CoverageBuilder builder = new CoverageBuilder();
         Analyzer analyzer = new Analyzer(loader.getExecutionDataStore(), builder);
-        for (Artifact artifact : artifacts) {
-            if ("sources".equals(artifact.getClassifier()) && artifact.getType().equals("jar")) {
-                jarUnArchiver.setSourceFile(artifact.getFile());
-                jarUnArchiver.setDestDirectory(sourcesDirectory);
-                jarUnArchiver.extract();
-            } else if (artifact.getClassifier() == null && artifact.getType().equals("jar")) {
-                try {
-                    analyzer.analyzeAll(artifact.getFile());
-                } catch (IOException ex) {
-                    throw new MojoExecutionException(String.format("Failed to analyze %s: %s", artifact.getFile(), ex.getMessage()), ex);
-                }
+        for (Artifact baseArtifact : getArtifactsInScope(DefaultArtifact.SCOPE_COMPILE)) {
+            jarUnArchiver.setSourceFile(resolveArtifact(baseArtifact, "sources", "jar", false, false));
+            jarUnArchiver.setDestDirectory(sourcesDirectory);
+            jarUnArchiver.extract();
+            try {
+                analyzer.analyzeAll(baseArtifact.getFile());
+            } catch (IOException ex) {
+                throw new MojoExecutionException(String.format("Failed to analyze %s: %s", baseArtifact.getFile(), ex.getMessage()), ex);
             }
         }
         IBundleCoverage bundle = builder.getBundle("aggregated");
