@@ -41,6 +41,9 @@ public class EnforceMojo extends AbstractMojo {
     private File classesDir;
 
     @Parameter
+    private String[] includes = new String[] { "**/*.class" };
+
+    @Parameter
     private String ignore;
 
     @Parameter
@@ -77,7 +80,7 @@ public class EnforceMojo extends AbstractMojo {
         }
         
         DirectoryScanner ds = new DirectoryScanner();
-        ds.setIncludes(new String[] { "**/*.class" });
+        ds.setIncludes(includes);
         ds.setBasedir(classesDir);
         ds.scan();
         for (String relativePath : ds.getIncludedFiles()) {
