@@ -83,6 +83,7 @@ public class EnforceMojo extends AbstractMojo {
         ds.setIncludes(includes);
         ds.setBasedir(classesDir);
         ds.scan();
+        int classCount = 0;
         for (String relativePath : ds.getIncludedFiles()) {
             try {
                 InputStream in = new FileInputStream(new File(classesDir, relativePath));
@@ -94,7 +95,9 @@ public class EnforceMojo extends AbstractMojo {
             } catch (IOException ex) {
                 throw new MojoExecutionException("Failed to read " + relativePath + ": " + ex.getMessage(), ex);
             }
+            classCount++;
         }
+        getLog().info(String.format("Scanned %s classes", classCount));
         
         Set<Reference<Clazz>> references = packageCycleDetector.getClassReferencesForPackageCycle();
         if (references != null) {
