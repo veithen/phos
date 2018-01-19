@@ -21,9 +21,13 @@ package com.github.veithen.phos.jacoco;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
@@ -53,6 +57,7 @@ import org.codehaus.plexus.archiver.UnArchiver;
 import org.jacoco.core.analysis.Analyzer;
 import org.jacoco.core.analysis.CoverageBuilder;
 import org.jacoco.core.analysis.IBundleCoverage;
+import org.jacoco.core.data.SessionInfo;
 import org.jacoco.core.tools.ExecFileLoader;
 import org.jacoco.report.DirectorySourceFileLocator;
 import org.jacoco.report.FileMultiReportOutput;
@@ -123,6 +128,20 @@ public class AggregateReportMojo extends AbstractMojo {
         }
     }
 
+    private List<SessionInfo> anonymize(List<SessionInfo> sessionInfos) {
+        Pattern pattern = Pattern.compile(".*-([0-9a-f]{8})");
+        List<SessionInfo> result = new ArrayList<>(sessionInfos.size());
+        for (SessionInfo sessionInfo : sessionInfos) {
+            Matcher matcher = pattern.matcher(sessionInfo.getId());
+            if (matcher.matches()) {
+                sessionInfo = new SessionInfo(matcher.group(1), sessionInfo.getStartTimeStamp(),
+                        sessionInfo.getDumpTimeStamp());
+            }
+            result.add(sessionInfo);
+        }
+        return result;
+    }
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         File sourcesDirectory = new File(project.getBuild().getDirectory(), "sources");
@@ -157,7 +176,7 @@ public class AggregateReportMojo extends AbstractMojo {
         try {
             IReportVisitor visitor = htmlFormatter.createVisitor(new FileMultiReportOutput(outputDirectory));
             visitor.visitInfo(
-                    loader.getSessionInfoStore().getInfos(),
+                    anonymize(loader.getSessionInfoStore().getInfos()),
                     loader.getExecutionDataStore().getContents());
             visitor.visitBundle(bundle, new DirectorySourceFileLocator(sourcesDirectory, "utf-8", 4));
             visitor.visitEnd();
