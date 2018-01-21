@@ -67,6 +67,8 @@ import org.jacoco.report.html.HTMLFormatter;
 @Mojo(name="aggregate-report", requiresDependencyResolution=ResolutionScope.TEST,
       defaultPhase=LifecyclePhase.SITE, threadSafe=true)
 public class AggregateReportMojo extends AbstractMojo {
+    private static final Pattern autoSessionIdPattern = Pattern.compile(".*-([0-9a-f]{1,8})");
+
     @Parameter(property="project", required=true, readonly=true)
     private MavenProject project;
 
@@ -128,16 +130,20 @@ public class AggregateReportMojo extends AbstractMojo {
         }
     }
 
-    private List<SessionInfo> anonymize(List<SessionInfo> sessionInfos) {
-        Pattern pattern = Pattern.compile(".*-([0-9a-f]{8})");
+    static SessionInfo anonymize(SessionInfo sessionInfo) {
+        Matcher matcher = autoSessionIdPattern.matcher(sessionInfo.getId());
+        if (matcher.matches()) {
+            return new SessionInfo(matcher.group(1), sessionInfo.getStartTimeStamp(),
+                    sessionInfo.getDumpTimeStamp());
+        } else {
+            return sessionInfo;
+        }
+    }
+
+    private static List<SessionInfo> anonymize(List<SessionInfo> sessionInfos) {
         List<SessionInfo> result = new ArrayList<>(sessionInfos.size());
         for (SessionInfo sessionInfo : sessionInfos) {
-            Matcher matcher = pattern.matcher(sessionInfo.getId());
-            if (matcher.matches()) {
-                sessionInfo = new SessionInfo(matcher.group(1), sessionInfo.getStartTimeStamp(),
-                        sessionInfo.getDumpTimeStamp());
-            }
-            result.add(sessionInfo);
+            result.add(anonymize(sessionInfo));
         }
         return result;
     }
