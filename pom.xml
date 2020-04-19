@@ -24,7 +24,7 @@
     <parent>
         <groupId>com.github.veithen</groupId>
         <artifactId>parent</artifactId>
-        <version>7</version>
+        <version>19</version>
     </parent>
 
     <groupId>com.github.veithen.phos</groupId>
@@ -49,6 +49,7 @@
 
     <properties>
         <github.repository>phos</github.repository>
+        <javaVersion>1.7</javaVersion>
     </properties>
 
     <dependencyManagement>
@@ -84,14 +85,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.6.0</version>
-                <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>license-maven-plugin</artifactId>
