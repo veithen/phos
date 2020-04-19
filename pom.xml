@@ -29,7 +29,7 @@
 
     <groupId>com.github.veithen.phos</groupId>
     <artifactId>phos</artifactId>
-    <version>0.3-SNAPSHOT</version>
+    <version>0.2.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <url>https://github.com/veithen/phos</url>
