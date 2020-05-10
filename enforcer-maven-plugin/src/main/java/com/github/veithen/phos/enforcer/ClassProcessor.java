@@ -19,6 +19,10 @@
  */
 package com.github.veithen.phos.enforcer;
 
+import java.io.IOException;
+import java.io.InputStream;
+
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -30,8 +34,8 @@ final class ClassProcessor extends ClassVisitor {
     private boolean deprecated;
     private ReferenceProcessor referenceProcessor;
     
-    ClassProcessor(ReferenceCollector referenceCollector) {
-        super(Opcodes.ASM5);
+    private ClassProcessor(ReferenceCollector referenceCollector) {
+        super(Opcodes.ASM8);
         this.referenceCollector = referenceCollector;
     }
 
@@ -75,6 +79,18 @@ final class ClassProcessor extends ClassVisitor {
             return new MethodProcessor(referenceProcessor);
         } else {
             return null;
+        }
+    }
+
+    static void processDefinition(InputStream in, ReferenceCollector referenceCollector) throws IOException {
+        new ClassReader(in).accept(new ClassProcessor(referenceCollector), ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+    }
+
+    static void processClass(Class<?> clazz, ReferenceCollector referenceCollector) {
+        try (InputStream in = clazz.getClassLoader().getResourceAsStream(clazz.getName().replace('.', '/') + ".class")) {
+            processDefinition(in, referenceCollector);
+        } catch (IOException ex) {
+            throw new Error(ex);
         }
     }
 }

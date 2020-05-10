@@ -17,15 +17,12 @@
  * limitations under the License.
  * #L%
  */
-package com.github.veithen.phos.enforcer;
+package com.github.veithen.phos.enforcer.factory.impl1;
 
-import static com.google.common.truth.Truth.assertThat;
+import com.github.veithen.phos.enforcer.factory.Service;
 
-import org.junit.Test;
-
-public class ClazzTest {
-    @Test
-    public void testGetPackageDefault() {
-        assertThat(new Clazz("Test").getPackage()).isSameInstanceAs(Package.DEFAULT);
+public final class ServiceImpl1 implements Service {
+    @Override
+    public void doSomething() {
     }
 }

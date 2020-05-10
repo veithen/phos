@@ -28,7 +28,7 @@ final class MethodProcessor extends MethodVisitor {
     private final ReferenceProcessor referenceProcessor;
 
     MethodProcessor(ReferenceProcessor referenceProcessor) {
-        super(Opcodes.ASM5);
+        super(Opcodes.ASM8);
         this.referenceProcessor = referenceProcessor;
     }
 
@@ -46,7 +46,7 @@ final class MethodProcessor extends MethodVisitor {
     @Override
     public void visitFieldInsn(int opcode, String owner, String name, String desc) {
         referenceProcessor.processType(Type.getObjectType(owner), false);
-        referenceProcessor.processType(Type.getMethodType(desc), false);
+        referenceProcessor.processType(Type.getType(desc), false);
     }
 
     @Override
@@ -57,6 +57,13 @@ final class MethodProcessor extends MethodVisitor {
             referenceProcessor.processType(Type.getObjectType(owner), false);
         }
         referenceProcessor.processType(Type.getMethodType(desc), false);
+    }
+
+    @Override
+    public void visitLdcInsn(Object value) {
+        if (value instanceof Type) {
+            referenceProcessor.processType((Type)value, false);
+        }
     }
 
     @Override

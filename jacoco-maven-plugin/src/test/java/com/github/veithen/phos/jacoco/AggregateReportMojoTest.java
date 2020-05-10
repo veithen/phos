@@ -30,7 +30,7 @@ public class AggregateReportMojoTest {
     public void testAnonymize() {
         SessionInfo sessionInfo = new SessionInfo("host-" + AbstractRuntime.createRandomId(), 0, 0);
         SessionInfo anonymizedSessionInfo = AggregateReportMojo.anonymize(sessionInfo);
-        assertThat(anonymizedSessionInfo).isNotSameAs(sessionInfo);
+        assertThat(anonymizedSessionInfo).isNotSameInstanceAs(sessionInfo);
         assertThat(anonymizedSessionInfo.getId()).doesNotContain("host");
     }
 }

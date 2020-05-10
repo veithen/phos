@@ -33,7 +33,6 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.DirectoryScanner;
-import org.objectweb.asm.ClassReader;
 
 @Mojo(name="enforce", defaultPhase=LifecyclePhase.PROCESS_CLASSES)
 public class EnforceMojo extends AbstractMojo {
@@ -88,7 +87,7 @@ public class EnforceMojo extends AbstractMojo {
             try {
                 InputStream in = new FileInputStream(new File(classesDir, relativePath));
                 try {
-                    new ClassReader(in).accept(new ClassProcessor(referenceCollector), ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+                    ClassProcessor.processDefinition(in, referenceCollector);
                 } finally {
                     in.close();
                 }
