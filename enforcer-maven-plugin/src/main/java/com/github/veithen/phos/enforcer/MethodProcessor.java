@@ -28,7 +28,7 @@ final class MethodProcessor extends MethodVisitor {
     private final ReferenceProcessor referenceProcessor;
 
     MethodProcessor(ReferenceProcessor referenceProcessor) {
-        super(Opcodes.ASM8);
+        super(Opcodes.ASM9);
         this.referenceProcessor = referenceProcessor;
     }
 

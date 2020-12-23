@@ -35,7 +35,7 @@ final class ClassProcessor extends ClassVisitor {
     private ReferenceProcessor referenceProcessor;
 
     private ClassProcessor(ReferenceCollector referenceCollector) {
-        super(Opcodes.ASM8);
+        super(Opcodes.ASM9);
         this.referenceCollector = referenceCollector;
     }
 
