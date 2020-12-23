@@ -25,14 +25,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.jgrapht.DirectedGraph;
 import org.jgrapht.EdgeFactory;
+import org.jgrapht.Graph;
 import org.jgrapht.alg.KosarajuStrongConnectivityInspector;
 import org.jgrapht.graph.DefaultDirectedGraph;
-import org.jgrapht.graph.DirectedSubgraph;
 
 final class PackageCycleDetector extends ReferenceCollector {
-    private final DirectedGraph<Package, Reference<Package>> packageGraph;
+    private final Graph<Package, Reference<Package>> packageGraph;
     private final Map<Reference<Package>, Reference<Clazz>> classReferenceSamples = new HashMap<>();
 
     PackageCycleDetector() {
@@ -62,10 +61,10 @@ final class PackageCycleDetector extends ReferenceCollector {
     }
 
     Set<Reference<Clazz>> getClassReferencesForPackageCycle() {
-        List<DirectedSubgraph<Package, Reference<Package>>> cycles =
+        List<Graph<Package, Reference<Package>>> cycles =
                 new KosarajuStrongConnectivityInspector<>(packageGraph)
-                        .stronglyConnectedSubgraphs();
-        for (DirectedSubgraph<Package, Reference<Package>> cycle : cycles) {
+                        .getStronglyConnectedComponents();
+        for (Graph<Package, Reference<Package>> cycle : cycles) {
             if (cycle.vertexSet().size() > 1) {
                 Set<Reference<Clazz>> classReferences = new HashSet<>();
                 for (Reference<Package> packageReference : cycle.edgeSet()) {
