@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,22 +64,23 @@ import org.jacoco.report.FileMultiReportOutput;
 import org.jacoco.report.IReportVisitor;
 import org.jacoco.report.html.HTMLFormatter;
 
-@Mojo(name="aggregate-report", requiresDependencyResolution=ResolutionScope.TEST,
-      defaultPhase=LifecyclePhase.SITE, threadSafe=true)
+@Mojo(
+        name = "aggregate-report",
+        requiresDependencyResolution = ResolutionScope.TEST,
+        defaultPhase = LifecyclePhase.SITE,
+        threadSafe = true)
 public class AggregateReportMojo extends AbstractMojo {
     private static final Pattern autoSessionIdPattern = Pattern.compile(".*-([0-9a-f]{1,8})");
 
-    @Parameter(property="project", required=true, readonly=true)
+    @Parameter(property = "project", required = true, readonly = true)
     private MavenProject project;
 
-    @Parameter(property="session", required=true, readonly=true)
+    @Parameter(property = "session", required = true, readonly = true)
     private MavenSession session;
 
-    @Component
-    private RepositorySystem repositorySystem;
+    @Component private RepositorySystem repositorySystem;
 
-    @Component
-    private ArtifactResolver resolver;
+    @Component private ArtifactResolver resolver;
 
     /**
      * The Jar archiver.
@@ -87,10 +88,10 @@ public class AggregateReportMojo extends AbstractMojo {
      * @component role="org.codehaus.plexus.archiver.Archiver" roleHint="jar"
      * @required
      */
-    @Component(hint="jar")
+    @Component(hint = "jar")
     private UnArchiver jarUnArchiver;
 
-    @Parameter(defaultValue="${project.build.directory}/site", required=true, readonly=true)
+    @Parameter(defaultValue = "${project.build.directory}/site", required = true, readonly = true)
     private File outputDirectory;
 
     private Set<Artifact> getArtifactsInScope(String scope) throws MojoExecutionException {
@@ -105,11 +106,18 @@ public class AggregateReportMojo extends AbstractMojo {
         }
     }
 
-    private File resolveArtifact(Artifact baseArtifact, String classifier, String type, boolean localOnly, boolean allowMissing) throws MojoExecutionException {
+    private File resolveArtifact(
+            Artifact baseArtifact,
+            String classifier,
+            String type,
+            boolean localOnly,
+            boolean allowMissing)
+            throws MojoExecutionException {
         ProjectBuildingRequest projectBuildingRequest = session.getProjectBuildingRequest();
         if (localOnly) {
             projectBuildingRequest = new DefaultProjectBuildingRequest(projectBuildingRequest);
-            projectBuildingRequest.setRemoteRepositories(Collections.<ArtifactRepository>emptyList());
+            projectBuildingRequest.setRemoteRepositories(
+                    Collections.<ArtifactRepository>emptyList());
         }
         Dependency dependency = new Dependency();
         dependency.setGroupId(baseArtifact.getGroupId());
@@ -120,7 +128,9 @@ public class AggregateReportMojo extends AbstractMojo {
         dependency.setScope(Artifact.SCOPE_COMPILE);
         Artifact artifact = repositorySystem.createDependencyArtifact(dependency);
         try {
-            return resolver.resolveArtifact(projectBuildingRequest, artifact).getArtifact().getFile();
+            return resolver.resolveArtifact(projectBuildingRequest, artifact)
+                    .getArtifact()
+                    .getFile();
         } catch (ArtifactResolverException ex) {
             if (allowMissing) {
                 return null;
@@ -133,7 +143,9 @@ public class AggregateReportMojo extends AbstractMojo {
     static SessionInfo anonymize(SessionInfo sessionInfo) {
         Matcher matcher = autoSessionIdPattern.matcher(sessionInfo.getId());
         if (matcher.matches()) {
-            return new SessionInfo(matcher.group(1), sessionInfo.getStartTimeStamp(),
+            return new SessionInfo(
+                    matcher.group(1),
+                    sessionInfo.getStartTimeStamp(),
                     sessionInfo.getDumpTimeStamp());
         } else {
             return sessionInfo;
@@ -159,20 +171,27 @@ public class AggregateReportMojo extends AbstractMojo {
                 try {
                     loader.load(file);
                 } catch (IOException ex) {
-                    throw new MojoExecutionException(String.format("Failed to load exec file %s: %s", file, ex.getMessage()), ex);
+                    throw new MojoExecutionException(
+                            String.format("Failed to load exec file %s: %s", file, ex.getMessage()),
+                            ex);
                 }
             }
         }
         CoverageBuilder builder = new CoverageBuilder();
         Analyzer analyzer = new Analyzer(loader.getExecutionDataStore(), builder);
         for (Artifact baseArtifact : getArtifactsInScope(DefaultArtifact.SCOPE_COMPILE)) {
-            jarUnArchiver.setSourceFile(resolveArtifact(baseArtifact, "sources", "jar", false, false));
+            jarUnArchiver.setSourceFile(
+                    resolveArtifact(baseArtifact, "sources", "jar", false, false));
             jarUnArchiver.setDestDirectory(sourcesDirectory);
             jarUnArchiver.extract();
             try {
                 analyzer.analyzeAll(baseArtifact.getFile());
             } catch (IOException ex) {
-                throw new MojoExecutionException(String.format("Failed to analyze %s: %s", baseArtifact.getFile(), ex.getMessage()), ex);
+                throw new MojoExecutionException(
+                        String.format(
+                                "Failed to analyze %s: %s",
+                                baseArtifact.getFile(), ex.getMessage()),
+                        ex);
             }
         }
         IBundleCoverage bundle = builder.getBundle("Coverage Report");
@@ -180,14 +199,17 @@ public class AggregateReportMojo extends AbstractMojo {
         htmlFormatter.setOutputEncoding("utf-8");
         htmlFormatter.setLocale(Locale.ENGLISH);
         try {
-            IReportVisitor visitor = htmlFormatter.createVisitor(new FileMultiReportOutput(outputDirectory));
+            IReportVisitor visitor =
+                    htmlFormatter.createVisitor(new FileMultiReportOutput(outputDirectory));
             visitor.visitInfo(
                     anonymize(loader.getSessionInfoStore().getInfos()),
                     loader.getExecutionDataStore().getContents());
-            visitor.visitBundle(bundle, new DirectorySourceFileLocator(sourcesDirectory, "utf-8", 4));
+            visitor.visitBundle(
+                    bundle, new DirectorySourceFileLocator(sourcesDirectory, "utf-8", 4));
             visitor.visitEnd();
         } catch (IOException ex) {
-            throw new MojoExecutionException(String.format("Failed to generate coverage report: %s", ex.getMessage()), ex);
+            throw new MojoExecutionException(
+                    String.format("Failed to generate coverage report: %s", ex.getMessage()), ex);
         }
     }
 }

@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,19 +34,16 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.DirectoryScanner;
 
-@Mojo(name="enforce", defaultPhase=LifecyclePhase.PROCESS_CLASSES)
+@Mojo(name = "enforce", defaultPhase = LifecyclePhase.PROCESS_CLASSES)
 public class EnforceMojo extends AbstractMojo {
-    @Parameter(defaultValue="${project.build.outputDirectory}", required=true, readonly=true)
+    @Parameter(defaultValue = "${project.build.outputDirectory}", required = true, readonly = true)
     private File classesDir;
 
-    @Parameter
-    private String[] includes = new String[] { "**/*.class" };
+    @Parameter private String[] includes = new String[] {"**/*.class"};
 
-    @Parameter
-    private String ignore;
+    @Parameter private String ignore;
 
-    @Parameter
-    private LayeringRuleBuilder[] layers;
+    @Parameter private LayeringRuleBuilder[] layers;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -58,26 +55,28 @@ public class EnforceMojo extends AbstractMojo {
         if (ignore != null) {
             for (String ignoreRule : ignore.split(",")) {
                 String[] s = ignoreRule.split("->");
-                ignoredClassReferences.add(new Reference<Clazz>(new Clazz(s[0].trim()), new Clazz(s[1].trim())));
+                ignoredClassReferences.add(
+                        new Reference<Clazz>(new Clazz(s[0].trim()), new Clazz(s[1].trim())));
             }
         }
-        ReferenceFilter referenceCollector = new ReferenceFilter(referenceCollectors, ignoredClassReferences);
-        
+        ReferenceFilter referenceCollector =
+                new ReferenceFilter(referenceCollectors, ignoredClassReferences);
+
         PackageCycleDetector packageCycleDetector = new PackageCycleDetector();
         referenceCollectors.addReferenceCollector(packageCycleDetector);
-        
+
         LayeringChecker layeringChecker;
         if (layers == null) {
             layeringChecker = null;
         } else {
             LayeringRule[] layeringRules = new LayeringRule[layers.length];
-            for (int i=0; i<layers.length; i++) {
+            for (int i = 0; i < layers.length; i++) {
                 layeringRules[i] = layers[i].build();
             }
             layeringChecker = new LayeringChecker(layeringRules);
             referenceCollectors.addReferenceCollector(layeringChecker);
         }
-        
+
         DirectoryScanner ds = new DirectoryScanner();
         ds.setIncludes(includes);
         ds.setBasedir(classesDir);
@@ -92,12 +91,13 @@ public class EnforceMojo extends AbstractMojo {
                     in.close();
                 }
             } catch (IOException ex) {
-                throw new MojoExecutionException("Failed to read " + relativePath + ": " + ex.getMessage(), ex);
+                throw new MojoExecutionException(
+                        "Failed to read " + relativePath + ": " + ex.getMessage(), ex);
             }
             classCount++;
         }
         getLog().info(String.format("Scanned %s classes", classCount));
-        
+
         Set<Reference<Clazz>> references = packageCycleDetector.getClassReferencesForPackageCycle();
         if (references != null) {
             StringBuilder buffer = new StringBuilder("Package cycle detected. Classes involved:");
@@ -109,11 +109,12 @@ public class EnforceMojo extends AbstractMojo {
             }
             throw new MojoFailureException(buffer.toString());
         }
-        
+
         if (layeringChecker != null) {
             Set<Reference<Clazz>> violatingReferences = layeringChecker.getViolatingReferences();
             if (!violatingReferences.isEmpty()) {
-                StringBuilder buffer = new StringBuilder("Layering violation detected. Classes involved:");
+                StringBuilder buffer =
+                        new StringBuilder("Layering violation detected. Classes involved:");
                 for (Reference<Clazz> reference : violatingReferences) {
                     buffer.append("\n  ");
                     buffer.append(reference.getFrom());
@@ -123,8 +124,9 @@ public class EnforceMojo extends AbstractMojo {
                 throw new MojoFailureException(buffer.toString());
             }
         }
-        
-        Set<Reference<Clazz>> unusedIgnoredClassReferences = referenceCollector.getUnusedIgnoredClassReferences();
+
+        Set<Reference<Clazz>> unusedIgnoredClassReferences =
+                referenceCollector.getUnusedIgnoredClassReferences();
         if (!unusedIgnoredClassReferences.isEmpty()) {
             StringBuilder buffer = new StringBuilder("Found unused ignored class references:");
             for (Reference<Clazz> reference : unusedIgnoredClassReferences) {

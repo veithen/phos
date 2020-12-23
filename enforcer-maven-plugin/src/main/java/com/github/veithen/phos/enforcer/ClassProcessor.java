@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ final class ClassProcessor extends ClassVisitor {
     private final ReferenceCollector referenceCollector;
     private boolean deprecated;
     private ReferenceProcessor referenceProcessor;
-    
+
     private ClassProcessor(ReferenceCollector referenceCollector) {
         super(Opcodes.ASM8);
         this.referenceCollector = referenceCollector;
@@ -44,11 +44,20 @@ final class ClassProcessor extends ClassVisitor {
     }
 
     @Override
-    public void visit(int version, int access, String name, String signature, String superName,
+    public void visit(
+            int version,
+            int access,
+            String name,
+            String signature,
+            String superName,
             String[] interfaces) {
         deprecated = (access & Opcodes.ACC_DEPRECATED) != 0;
         if (!deprecated) {
-            referenceProcessor = new ReferenceProcessor(referenceCollector, new Clazz(Type.getObjectType(name).getClassName()), isPublic(access));
+            referenceProcessor =
+                    new ReferenceProcessor(
+                            referenceCollector,
+                            new Clazz(Type.getObjectType(name).getClassName()),
+                            isPublic(access));
             referenceProcessor.processType(Type.getObjectType(superName), true);
             for (String iface : interfaces) {
                 referenceProcessor.processType(Type.getObjectType(iface), true);
@@ -57,8 +66,8 @@ final class ClassProcessor extends ClassVisitor {
     }
 
     @Override
-    public FieldVisitor visitField(int access, String name, String desc, String signature,
-            Object value) {
+    public FieldVisitor visitField(
+            int access, String name, String desc, String signature, Object value) {
         if (!deprecated) {
             referenceProcessor.processType(Type.getType(desc), isPublic(access));
         }
@@ -66,8 +75,8 @@ final class ClassProcessor extends ClassVisitor {
     }
 
     @Override
-    public MethodVisitor visitMethod(int access, String name, String desc, String signature,
-            String[] exceptions) {
+    public MethodVisitor visitMethod(
+            int access, String name, String desc, String signature, String[] exceptions) {
         if (!deprecated && (access & Opcodes.ACC_DEPRECATED) == 0) {
             boolean isPublic = isPublic(access);
             referenceProcessor.processType(Type.getMethodType(desc), isPublic);
@@ -82,12 +91,18 @@ final class ClassProcessor extends ClassVisitor {
         }
     }
 
-    static void processDefinition(InputStream in, ReferenceCollector referenceCollector) throws IOException {
-        new ClassReader(in).accept(new ClassProcessor(referenceCollector), ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+    static void processDefinition(InputStream in, ReferenceCollector referenceCollector)
+            throws IOException {
+        new ClassReader(in)
+                .accept(
+                        new ClassProcessor(referenceCollector),
+                        ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
     }
 
     static void processClass(Class<?> clazz, ReferenceCollector referenceCollector) {
-        try (InputStream in = clazz.getClassLoader().getResourceAsStream(clazz.getName().replace('.', '/') + ".class")) {
+        try (InputStream in =
+                clazz.getClassLoader()
+                        .getResourceAsStream(clazz.getName().replace('.', '/') + ".class")) {
             processDefinition(in, referenceCollector);
         } catch (IOException ex) {
             throw new Error(ex);

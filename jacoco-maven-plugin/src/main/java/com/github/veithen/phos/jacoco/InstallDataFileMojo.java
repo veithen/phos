@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,34 +35,38 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
-@Mojo(name="install-data-file", defaultPhase=LifecyclePhase.INSTALL)
+@Mojo(name = "install-data-file", defaultPhase = LifecyclePhase.INSTALL)
 public class InstallDataFileMojo extends AbstractMojo {
-    @Parameter(property="project", required=true, readonly=true)
+    @Parameter(property = "project", required = true, readonly = true)
     private MavenProject project;
 
-    @Parameter(property="localRepository", required=true, readonly=true)
+    @Parameter(property = "localRepository", required = true, readonly = true)
     private ArtifactRepository localRepository;
 
-    @Component
-    private ArtifactFactory artifactFactory;
+    @Component private ArtifactFactory artifactFactory;
 
-    @Component
-    private ArtifactInstaller installer;
+    @Component private ArtifactInstaller installer;
 
-    @Parameter(defaultValue="${project.build.directory}/jacoco.exec", required=true)
+    @Parameter(defaultValue = "${project.build.directory}/jacoco.exec", required = true)
     private File dataFile;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (dataFile.exists()) {
-            Artifact artifact = artifactFactory.createArtifactWithClassifier(
-                    project.getGroupId(), project.getArtifactId(), project.getVersion(), "exec", "jacoco");
+            Artifact artifact =
+                    artifactFactory.createArtifactWithClassifier(
+                            project.getGroupId(),
+                            project.getArtifactId(),
+                            project.getVersion(),
+                            "exec",
+                            "jacoco");
             try {
                 installer.install(dataFile, artifact, localRepository);
             } catch (ArtifactInstallationException ex) {
                 throw new MojoExecutionException(
-                        String.format("Error installing artifact '%s': %s",
-                                      artifact.getDependencyConflictId(), ex.getMessage()),
+                        String.format(
+                                "Error installing artifact '%s': %s",
+                                artifact.getDependencyConflictId(), ex.getMessage()),
                         ex);
             }
         }
