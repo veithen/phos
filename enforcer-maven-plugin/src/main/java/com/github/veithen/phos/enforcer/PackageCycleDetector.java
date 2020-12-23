@@ -27,7 +27,7 @@ import java.util.Set;
 
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.EdgeFactory;
-import org.jgrapht.alg.StrongConnectivityInspector;
+import org.jgrapht.alg.KosarajuStrongConnectivityInspector;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DirectedSubgraph;
 
@@ -63,7 +63,8 @@ final class PackageCycleDetector extends ReferenceCollector {
 
     Set<Reference<Clazz>> getClassReferencesForPackageCycle() {
         List<DirectedSubgraph<Package, Reference<Package>>> cycles =
-                new StrongConnectivityInspector<>(packageGraph).stronglyConnectedSubgraphs();
+                new KosarajuStrongConnectivityInspector<>(packageGraph)
+                        .stronglyConnectedSubgraphs();
         for (DirectedSubgraph<Package, Reference<Package>> cycle : cycles) {
             if (cycle.vertexSet().size() > 1) {
                 Set<Reference<Clazz>> classReferences = new HashSet<>();
