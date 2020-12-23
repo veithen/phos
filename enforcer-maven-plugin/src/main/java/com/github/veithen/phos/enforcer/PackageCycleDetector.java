@@ -19,31 +19,25 @@
  */
 package com.github.veithen.phos.enforcer;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import org.jgrapht.EdgeFactory;
 import org.jgrapht.Graph;
-import org.jgrapht.alg.KosarajuStrongConnectivityInspector;
+import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;
 import org.jgrapht.graph.DefaultDirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
 
 final class PackageCycleDetector extends ReferenceCollector {
-    private final Graph<Package, Reference<Package>> packageGraph;
-    private final Map<Reference<Package>, Reference<Clazz>> classReferenceSamples = new HashMap<>();
+    @SuppressWarnings("serial")
+    private class Edge extends DefaultEdge {
+        Reference<Clazz> classReferenceSample;
+    }
+
+    private final Graph<Package, Edge> packageGraph;
 
     PackageCycleDetector() {
-        packageGraph =
-                new DefaultDirectedGraph<>(
-                        new EdgeFactory<Package, Reference<Package>>() {
-                            @Override
-                            public Reference<Package> createEdge(
-                                    Package sourceVertex, Package targetVertex) {
-                                return new Reference<Package>(sourceVertex, targetVertex);
-                            }
-                        });
+        packageGraph = new DefaultDirectedGraph<>(null, Edge::new, false);
     }
 
     @Override
@@ -53,22 +47,22 @@ final class PackageCycleDetector extends ReferenceCollector {
         if (!fromPackage.equals(toPackage)) {
             packageGraph.addVertex(fromPackage);
             packageGraph.addVertex(toPackage);
-            Reference<Package> packageReference = packageGraph.addEdge(fromPackage, toPackage);
-            if (packageReference != null) {
-                classReferenceSamples.put(packageReference, classReference);
+            Edge edge = packageGraph.addEdge(fromPackage, toPackage);
+            if (edge != null) {
+                edge.classReferenceSample = classReference;
             }
         }
     }
 
     Set<Reference<Clazz>> getClassReferencesForPackageCycle() {
-        List<Graph<Package, Reference<Package>>> cycles =
+        List<Graph<Package, Edge>> cycles =
                 new KosarajuStrongConnectivityInspector<>(packageGraph)
                         .getStronglyConnectedComponents();
-        for (Graph<Package, Reference<Package>> cycle : cycles) {
+        for (Graph<Package, Edge> cycle : cycles) {
             if (cycle.vertexSet().size() > 1) {
                 Set<Reference<Clazz>> classReferences = new HashSet<>();
-                for (Reference<Package> packageReference : cycle.edgeSet()) {
-                    classReferences.add(classReferenceSamples.get(packageReference));
+                for (Edge edge : cycle.edgeSet()) {
+                    classReferences.add(edge.classReferenceSample);
                 }
                 return classReferences;
             }
