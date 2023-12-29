@@ -19,13 +19,13 @@
  */
 package com.github.veithen.phos.enforcer;
 
-import static com.google.common.truth.Truth.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
 
 public class ClazzTest {
     @Test
     public void testGetPackageDefault() {
-        assertThat(new Clazz("Test").getPackage()).isSameInstanceAs(Package.DEFAULT);
+        assertThat(new Clazz("Test").getPackage()).isSameAs(Package.DEFAULT);
     }
 }
