@@ -95,7 +95,6 @@
                 <artifactId>license-maven-plugin</artifactId>
                 <configuration>
                     <projectName>Phos</projectName>
-                    <licenseName>apache_v2</licenseName>
                 </configuration>
             </plugin>
         </plugins>
