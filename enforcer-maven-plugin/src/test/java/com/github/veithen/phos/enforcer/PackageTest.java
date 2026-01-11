@@ -28,4 +28,10 @@ public class PackageTest {
     public void testHashCodeDefault() {
         assertThat(Package.DEFAULT.hashCode()).isEqualTo(0);
     }
+
+    @Test
+    public void testEqualsDefault() {
+        assertThat(Package.DEFAULT).isNotEqualTo(Package.byName("a.b.c"));
+        assertThat(Package.byName("a.b.c")).isNotEqualTo(Package.DEFAULT);
+    }
 }

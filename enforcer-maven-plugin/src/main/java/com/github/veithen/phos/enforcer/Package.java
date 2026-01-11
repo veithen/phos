@@ -19,6 +19,8 @@
  */
 package com.github.veithen.phos.enforcer;
 
+import java.util.Objects;
+
 final class Package {
     static final Package DEFAULT = new Package(null);
 
@@ -43,7 +45,7 @@ final class Package {
 
     @Override
     public boolean equals(Object obj) {
-        return obj == this || obj instanceof Package && ((Package) obj).name.equals(name);
+        return obj == this || obj instanceof Package && Objects.equals(((Package) obj).name, name);
     }
 
     @Override
