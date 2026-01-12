@@ -22,7 +22,7 @@
     <parent>
         <groupId>com.github.veithen.phos</groupId>
         <artifactId>phos</artifactId>
-        <version>0.4.1-SNAPSHOT</version>
+        <version>0.4.1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -37,7 +37,7 @@
         <url>https://github.com/veithen/phos/tree/master</url>
         <connection>scm:git:http://github.com/veithen/phos.git</connection>
         <developerConnection>scm:git:https://github.com/veithen/phos.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>0.4.1</tag>
     </scm>
 
     <dependencies>

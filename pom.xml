@@ -29,7 +29,7 @@
 
     <groupId>com.github.veithen.phos</groupId>
     <artifactId>phos</artifactId>
-    <version>0.4.1-SNAPSHOT</version>
+    <version>0.4.1</version>
     <packaging>pom</packaging>
 
     <name>Phos</name>
@@ -44,13 +44,13 @@
         <url>https://github.com/veithen/phos/tree/master</url>
         <connection>scm:git:http://github.com/veithen/phos.git</connection>
         <developerConnection>scm:git:https://github.com/veithen/phos.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>0.4.1</tag>
     </scm>
 
     <properties>
         <github.repository>phos</github.repository>
         <javaVersion>11</javaVersion>
-        <project.build.outputTimestamp>2023-05-17T22:28:18Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2026-01-12T09:34:43Z</project.build.outputTimestamp>
         <maven.version>3.9.12</maven.version>
     </properties>
 
