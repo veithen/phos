@@ -21,7 +21,8 @@
         <pluginExecution>
             <pluginExecutionFilter>
                 <goals>
-                    <goal>enforce</goal>
+                    <goal>detect-cycles</goal>
+                    <goal>enforce-layering</goal>
                 </goals>
             </pluginExecutionFilter>
             <action>

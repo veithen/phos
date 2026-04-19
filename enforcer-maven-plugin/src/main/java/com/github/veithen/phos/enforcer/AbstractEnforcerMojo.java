@@ -29,13 +29,10 @@ import java.util.Set;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.DirectoryScanner;
 
-@Mojo(name = "enforce", defaultPhase = LifecyclePhase.PROCESS_CLASSES)
-public class EnforceMojo extends AbstractMojo {
+abstract class AbstractEnforcerMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.build.outputDirectory}", required = true, readonly = true)
     private File classesDir;
 
@@ -43,7 +40,9 @@ public class EnforceMojo extends AbstractMojo {
 
     @Parameter private String ignore;
 
-    @Parameter private LayeringRuleBuilder[] layers;
+    abstract void addReferenceCollectors(ReferenceCollectorSet collectors);
+
+    abstract void checkResults() throws MojoFailureException;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -62,20 +61,7 @@ public class EnforceMojo extends AbstractMojo {
         ReferenceFilter referenceCollector =
                 new ReferenceFilter(referenceCollectors, ignoredClassReferences);
 
-        PackageCycleDetector packageCycleDetector = new PackageCycleDetector();
-        referenceCollectors.addReferenceCollector(packageCycleDetector);
-
-        LayeringChecker layeringChecker;
-        if (layers == null) {
-            layeringChecker = null;
-        } else {
-            LayeringRule[] layeringRules = new LayeringRule[layers.length];
-            for (int i = 0; i < layers.length; i++) {
-                layeringRules[i] = layers[i].build();
-            }
-            layeringChecker = new LayeringChecker(layeringRules);
-            referenceCollectors.addReferenceCollector(layeringChecker);
-        }
+        addReferenceCollectors(referenceCollectors);
 
         DirectoryScanner ds = new DirectoryScanner();
         ds.setIncludes(includes);
@@ -98,32 +84,7 @@ public class EnforceMojo extends AbstractMojo {
         }
         getLog().info(String.format("Scanned %s classes", classCount));
 
-        Set<Reference<Clazz>> references = packageCycleDetector.getClassReferencesForPackageCycle();
-        if (references != null) {
-            StringBuilder buffer = new StringBuilder("Package cycle detected. Classes involved:");
-            for (Reference<Clazz> reference : references) {
-                buffer.append("\n  ");
-                buffer.append(reference.getFrom());
-                buffer.append(" -> ");
-                buffer.append(reference.getTo());
-            }
-            throw new MojoFailureException(buffer.toString());
-        }
-
-        if (layeringChecker != null) {
-            Set<Reference<Clazz>> violatingReferences = layeringChecker.getViolatingReferences();
-            if (!violatingReferences.isEmpty()) {
-                StringBuilder buffer =
-                        new StringBuilder("Layering violation detected. Classes involved:");
-                for (Reference<Clazz> reference : violatingReferences) {
-                    buffer.append("\n  ");
-                    buffer.append(reference.getFrom());
-                    buffer.append(" -> ");
-                    buffer.append(reference.getTo());
-                }
-                throw new MojoFailureException(buffer.toString());
-            }
-        }
+        checkResults();
 
         Set<Reference<Clazz>> unusedIgnoredClassReferences =
                 referenceCollector.getUnusedIgnoredClassReferences();
