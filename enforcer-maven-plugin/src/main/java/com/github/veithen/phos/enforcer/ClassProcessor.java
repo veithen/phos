@@ -98,14 +98,4 @@ final class ClassProcessor extends ClassVisitor {
                         new ClassProcessor(referenceCollector),
                         ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
     }
-
-    static void processClass(Class<?> clazz, ReferenceCollector referenceCollector) {
-        try (InputStream in =
-                clazz.getClassLoader()
-                        .getResourceAsStream(clazz.getName().replace('.', '/') + ".class")) {
-            processDefinition(in, referenceCollector);
-        } catch (IOException ex) {
-            throw new Error(ex);
-        }
-    }
 }
